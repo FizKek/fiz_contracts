@@ -11,7 +11,7 @@ module.exports = async ({
     args: [],
     log: true,
   });
-  // await run("userCase")
+  await run("userCase")
 };
 module.exports.tags = ["E721"];
 module.exports.dependencies = ["Registry", "DAI"];
