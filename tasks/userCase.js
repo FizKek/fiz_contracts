@@ -6,7 +6,7 @@ module.exports = async (
       getNamedSigners,
       getContract,
       getContractAt,
-      utils: { parseEther },
+      utils: { parseEther, parseUnits },
     },
   }
 ) => {
@@ -36,7 +36,7 @@ module.exports = async (
     [1]
   );
 
-  await DAI.connect(scholar).approve(Registry.address, parseEther("1"));
+  await DAI.connect(scholar).approve(Registry.address, parseUnits("1", 15));
 
   await Registry.connect(scholar).rent(
     [0],
@@ -47,22 +47,38 @@ module.exports = async (
     [1] // rent amount
   );
 
-  // await Registry.connect(scholar).stopRent(
-  //   [0],
-  //   [E721.address],
-  //   [1],// tokenID
-  //   [1],// lendingId
-  //   [1],// rentDuration uint8
-  //   )
-  await network.provider.send("evm_increaseTime", [11 * 24 * 60 * 60]);
+  await network.provider.send("evm_increaseTime", [9 * 24 * 60 * 60]);
 
-  console.log("------");
-  //   await Registry.stopLend(
+  await network.provider.send("evm_increaseTime", [2 * 24 * 60 * 60]);
+  //   await Registry.connect(scholar).stopRent(
   //     [0],
   //     [E721.address],
   //     [1],// tokenID
   //     [1],// lendingId
+  //     [1],// rentDuration uint8
   //     )
+  console.log(await DAI.balanceOf(deployer.address));
+
+  await Registry.claimRent(
+    [0],
+    [E721.address],
+    [1], // tokenID
+    [1], // lendingId
+    [1] // _rentingID
+  );
+
+  console.log((await DAI.balanceOf(deployer.address)).toString());
+  // 1000000000000000
+
+  // 0x038d7ea4c68000
+  await Registry.stopLend(
+    [0],
+    [E721.address],
+    [1], // tokenID
+    [1] // lendingId
+  );
+
+  console.log("-----");
 
   //   function stopRent(
   //     IRegistry.NFTStandard[] memory nftStandard,

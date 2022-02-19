@@ -1,14 +1,8 @@
 const { providers } = require("ethers");
 
 module.exports = async ({
-  network,
   deployments: { deploy },
-  ethers: {
-    getNamedSigners,
-    getContract,
-    getContractAt,
-    utils: { parseEther },
-  },
+  ethers: { getNamedSigners },
 }) => {
   const { deployer } = await getNamedSigners();
 
@@ -17,6 +11,7 @@ module.exports = async ({
     args: [],
     log: true,
   });
+  // await run("userCase")
 };
 module.exports.tags = ["E721"];
 module.exports.dependencies = ["Registry", "DAI"];
