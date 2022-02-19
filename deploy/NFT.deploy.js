@@ -6,12 +6,12 @@ module.exports = async ({
 }) => {
   const { deployer } = await getNamedSigners();
 
-  await deploy("E721", {
+  await deploy("ERC721Token", {
     from: deployer.address,
     args: [],
     log: true,
   });
-  await run("userCase")
+  // await run("userCase")
 };
-module.exports.tags = ["E721"];
+module.exports.tags = ["ERC721Token"];
 module.exports.dependencies = ["Registry", "DAI"];
