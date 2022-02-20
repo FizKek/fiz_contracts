@@ -13,8 +13,12 @@ require("./tasks");
 module.exports = {
   solidity: "0.8.12",
   networks: {
+    hardhat: {
+      chainId: 1337,
+      // accounts: [process.env.PRIVATE_KEY],
+    },
     localhost: {
-      url: "http://127.0.0.1:8545",
+      url: "http://127.0.0.1:8545/"
       // accounts: [process.env.PRIVATE_KEY],
     },
   },
@@ -25,6 +29,9 @@ module.exports = {
     scholar: {
       default: 1,
     },
+    staker: {
+      default: 2,
+    }
   },
   solidity: {
     compilers: [

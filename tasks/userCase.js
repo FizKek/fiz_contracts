@@ -13,22 +13,20 @@ module.exports = async (
   const { deployer, scholar } = await getNamedSigners();
   const Resolver = await getContract("Resolver");
   const DAI = await getContract("DAI");
-  const E721 = await getContract("E721");
+  const ERC721Token = await getContract("ERC721Token");
   const Registry = await getContract("Registry");
 
-  await Resolver.setPaymentToken(1, DAI.address);
+  await ERC721Token.faucet();
+  // console.log(await ERC721Token.balanceOf(deployer.address));
+  // console.log(await ERC721Token.tokenByIndex(0));
+  // console.log(await ERC721Token.tokenURI(1));
 
-  await E721.faucet();
-  console.log(await E721.balanceOf(deployer.address));
-  console.log(await E721.tokenByIndex(0));
-  console.log(await E721.tokenURI(1));
-
-  await E721.approve(Registry.address, 1);
+  await ERC721Token.approve(Registry.address, 1);
   await DAI.connect(scholar).faucet();
 
   await Registry.lend(
     [0],
-    [E721.address],
+    [ERC721Token.address],
     [1], // tokenID
     [10], // lendamount
     [10], // rent duration uint8
@@ -40,28 +38,31 @@ module.exports = async (
 
   await Registry.connect(scholar).rent(
     [0],
-    [E721.address],
+    [ERC721Token.address],
     [1], // tokenID
     [1], // lendingId
     [10], // rentDuration uint8
     [1] // rent amount
   );
 
-  await network.provider.send("evm_increaseTime", [9 * 24 * 60 * 60]);
+  console.log((await DAI.balanceOf(deployer.address)).toString());
 
-  await network.provider.send("evm_increaseTime", [2 * 24 * 60 * 60]);
-  //   await Registry.connect(scholar).stopRent(
+  await network.provider.send("evm_increaseTime", [9 * 24 * 60 * 60]);
+  // await Registry.connect(scholar).stopRent(
   //     [0],
-  //     [E721.address],
+  //     [ERC721Token.address],
   //     [1],// tokenID
   //     [1],// lendingId
   //     [1],// rentDuration uint8
   //     )
-  console.log(await DAI.balanceOf(deployer.address));
+
+  await network.provider.send("evm_increaseTime", [2 * 24 * 60 * 60]);
+
+  console.log((await DAI.balanceOf(deployer.address)).toString());
 
   await Registry.claimRent(
     [0],
-    [E721.address],
+    [ERC721Token.address],
     [1], // tokenID
     [1], // lendingId
     [1] // _rentingID
@@ -73,7 +74,7 @@ module.exports = async (
   // 0x038d7ea4c68000
   await Registry.stopLend(
     [0],
-    [E721.address],
+    [ERC721Token.address],
     [1], // tokenID
     [1] // lendingId
   );

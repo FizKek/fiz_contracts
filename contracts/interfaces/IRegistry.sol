@@ -91,6 +91,8 @@ interface IRegistry {
         uint16 rentAmount;
     }
 
+    function lendingID() external returns(uint256);
+
     // creates the lending structs and adds them to the enumerable set
     function lend(
         IRegistry.NFTStandard[] memory nftStandard,
