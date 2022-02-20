@@ -4,7 +4,7 @@ module.exports = async ({
 }) => {
   const { deployer } = await getNamedAccounts();
 
-  const DAI=await deploy("DAI", {
+  const DAI = await deploy("DAI", {
     from: deployer,
     args: [],
     log: true,

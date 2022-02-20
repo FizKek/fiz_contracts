@@ -43,7 +43,7 @@ contract Registry is IRegistry, ERC721Holder, ERC1155Receiver, ERC1155Holder {
     bool public paused = false;
     uint256 public rentFee = 0;
     uint256 private constant SECONDS_IN_DAY = 86400;
-    mapping(bytes32 => Lending) private lendings;
+    mapping(bytes32 => Lending) public lendings;
     mapping(bytes32 => Renting) private rentings;
 
     modifier onlyAdmin() {

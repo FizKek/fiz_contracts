@@ -5,10 +5,11 @@ module.exports = async ({
   const { deployer } = await getNamedAccounts();
   const Registry = await getContract("Registry");
   const ERC721Token = await getContract("ERC721Token");
+  const DAI = await getContract("DAI");
 
   await deploy("NFTStaking", {
     from: deployer,
-    args: [Registry.address, ERC721Token.address],
+    args: [Registry.address, ERC721Token.address, DAI.address],
     log: true,
   });
   // await run("stakingTest");
@@ -16,4 +17,4 @@ module.exports = async ({
 };
 
 module.exports.tags = ["NFTStaking"];
-module.exports.dependencies = ["ERC721Token", "Registry"];
+module.exports.dependencies = ["ERC721Token", "Registry", "DAI"];

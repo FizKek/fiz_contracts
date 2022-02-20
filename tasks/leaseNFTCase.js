@@ -6,7 +6,7 @@ module.exports = async (
       getNamedSigners,
       getContract,
       getContractAt,
-      utils: { parseEther, parseUnits },
+      utils: { keccak256, parseUnits, defaultAbiCoder },
     },
   }
 ) => {
@@ -17,16 +17,14 @@ module.exports = async (
   const DAI = await getContract("DAI");
 
   await ERC721Token.faucet();
-  console.log(await ERC721Token.balanceOf(deployer.address));
-  console.log(await ERC721Token.balanceOf(NFTStaking.address));
 
   await ERC721Token.approve(NFTStaking.address, 1);
   await NFTStaking.stake(1, 7 * 24 * 60 * 60);
 
-  await NFTStaking.leaseNFT(scholar.address,1, 1);
+  await NFTStaking.leaseNFT(scholar.address, 1, 1);
 
-  await DAI.connect(scholar).faucet()
-  await DAI.connect(scholar).approve(Registry.address, parseUnits("1",14));
+  await DAI.connect(scholar).faucet();
+  await DAI.connect(scholar).approve(Registry.address, parseUnits("1", 14));
   await Registry.connect(scholar).rent(
     [0],
     [ERC721Token.address],
@@ -35,4 +33,23 @@ module.exports = async (
     [1], // rentDuration uint8
     [1] // rent amount
   );
+  await network.provider.send("evm_increaseTime", [25 * 60 * 60]);
+
+  console.log((await DAI.balanceOf(deployer.address)).toString());
+
+  // const bytes32=keccak256(defaultAbiCoder.encode([ "address", "uint256","uint256" ], [ ERC721Token.address, 1,1 ]))
+  // console.log(await Registry.lendings(bytes32))
+
+
+  // const StakeInfo = await NFTStaking.stakes(1);
+  // console.log(StakeInfo);
+  // console.log(await NFTStaking.getActiveScholars())
+  
+  await NFTStaking.claimNFT(1, 1);
+
+  console.log((await DAI.balanceOf(deployer.address)).toString());
+
+  await NFTStaking.claimRewards(1, "80000000000000");
+
+  console.log((await DAI.balanceOf(deployer.address)).toString());
 };

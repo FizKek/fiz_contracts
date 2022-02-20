@@ -31,13 +31,20 @@ contract NFTStaking is Ownable, ERC721Holder {
         address scholarAddress;
     }
 
-    constructor(IRegistry _protocol, address _token) {
+    constructor(
+        IRegistry _protocol,
+        address _token,
+        address _rewardToken
+    ) {
         availableProtocol = _protocol;
         availableToken = _token;
+        rewardToken = _rewardToken;
     }
 
     // The token accepted for staking
     address public availableToken;
+
+    address public rewardToken;
 
     // struccture that stores the records of users' stakes
     mapping(uint256 => StakeInfo) public stakes;
@@ -110,14 +117,12 @@ contract NFTStaking is Ownable, ERC721Holder {
         );
     }
 
-    function claim(uint256 _tokenId) external {}
-
     function leaseNFT(
         address _scholarAddress,
         uint256 _tokenID,
         uint8 _rentDuration
     ) external onlyOwner {
-        StakeInfo memory tokenInfo = stakes[_tokenID];
+        StakeInfo storage tokenInfo = stakes[_tokenID];
         require(tokenInfo.staked, "Staking::leaseNFT: NFT not staked");
         require(
             tokenInfo.lendingID == 0,
@@ -150,6 +155,7 @@ contract NFTStaking is Ownable, ERC721Holder {
 
         bytes4[] memory dailyRentPrices = new bytes4[](1);
         dailyRentPrices[0] = bytes4(0x00000001); // daily rent price,
+        tokenInfo.lendingID = availableProtocol.lendingID();
 
         IERC721(availableToken).approve(address(availableProtocol), _tokenID);
         availableProtocol.lend(
@@ -161,20 +167,68 @@ contract NFTStaking is Ownable, ERC721Holder {
             dailyRentPrices,
             paymentTokens
         );
-        tokenInfo.lendingID = availableProtocol.lendingID();
         tokenInfo.scholarAddress = _scholarAddress;
     }
 
-    function getActiveScholars(address _scholar)
-        external
-        view
-        returns (address[] memory)
-    {
+    function claimNFT(uint256 _tokenID, uint256 _rentingID) external {
+        IRegistry.NFTStandard[]
+            memory NFTstandart = new IRegistry.NFTStandard[](1);
+        NFTstandart[0] = IRegistry.NFTStandard.E721; // enum type erc721
+
+        address[] memory nftAddresses = new address[](1);
+        nftAddresses[0] = availableToken;
+
+        uint256[] memory tokenID = new uint256[](1);
+        tokenID[0] = _tokenID;
+
+        uint256[] memory lendingID = new uint256[](1);
+        lendingID[0] = stakes[_tokenID].lendingID;
+        uint256[] memory rentingID = new uint256[](1);
+        rentingID[0] = _rentingID;
+
+        uint256 balanceBefore = IERC20(rewardToken).balanceOf(address(this));
+
+        availableProtocol.claimRent(
+            NFTstandart,
+            nftAddresses,
+            tokenID,
+            lendingID,
+            rentingID
+        );
+        uint256 balanceAfter = IERC20(rewardToken).balanceOf(address(this));
+        uint256 rewards = balanceAfter - balanceBefore;
+
+        uint256 toManager = rewards / 5;
+        stakes[_tokenID].totalYield = rewards - toManager;
+        IERC20(rewardToken).transfer(owner(), toManager);
+        availableProtocol.stopLend(
+            NFTstandart,
+            nftAddresses,
+            tokenID,
+            lendingID
+        );
+    }
+
+    function claimRewards(uint256 _tokenID, uint256 _amount) external {
+        require(
+            msg.sender == stakes[_tokenID].stakerAddress,
+            "Sender is not staker"
+        );
+        require(
+            _amount <=
+                (stakes[_tokenID].totalYield - stakes[_tokenID].harvestedYield),
+            " _amount more  than rewards"
+        );
+        stakes[_tokenID].harvestedYield += _amount;
+        IERC20(rewardToken).transfer(msg.sender, _amount);
+    }
+
+    function getActiveScholars() external view returns (address[] memory) {
         uint256 counter;
         for (uint256 i; i < stakers.length; i++) {
             uint256[] memory id = stakedTokens[stakers[i]];
             for (uint256 j; j < id.length; i++) {
-                if (stakes[j].scholarAddress == _scholar) {
+                if (stakes[j].scholarAddress != address(0)) {
                     counter++;
                 }
             }
@@ -185,7 +239,7 @@ contract NFTStaking is Ownable, ERC721Holder {
         for (uint256 i; i < stakers.length; i++) {
             uint256[] memory id = stakedTokens[stakers[i]];
             for (uint256 j; j < id.length; i++) {
-                if (stakes[j].scholarAddress == _scholar) {
+                if (stakes[j].scholarAddress != address(0)) {
                     activeScholars[counter];
                     counter++;
                 }
