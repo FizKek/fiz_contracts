@@ -13,7 +13,7 @@ module.exports = async ({
     log: true,
   });
   // await run("stakingTest");
-  await run("leaseNFTCase");
+  // await run("leaseNFTCase");
 };
 
 module.exports.tags = ["NFTStaking"];

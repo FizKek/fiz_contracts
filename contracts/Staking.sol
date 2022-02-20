@@ -226,7 +226,7 @@ contract NFTStaking is Ownable, ERC721Holder {
         uint256 counter;
         for (uint256 i=0;i<stakers.length;i++){
             uint256[] memory stakerNFT=stakedTokens[stakers[i]];
-            for (uint256 j=0;j<stakerNFT.length;i++){
+            for (uint256 j=0;j<stakerNFT.length;j++){
                 allNFT[counter]=stakes[stakerNFT[j]];
                 counter++;
             }
