@@ -11,7 +11,7 @@ import "./interfaces/IRegistry.sol";
 import "./interfaces/IResolver.sol";
 
 contract NFTStaking is Ownable, ERC721Holder {
-    IRegistry availableProtocol;
+    IRegistry public availableProtocol;
     // user deposits are recorded in StakeInfo[] stakes struct
     struct StakeInfo {
         // staked is true if token is staked and hasn't been unstaked.
@@ -26,17 +26,17 @@ contract NFTStaking is Ownable, ERC721Holder {
         uint256 totalYield;
         // The amount of yield user already harvested
         uint256 harvestedYield;
+        bool inLease;
     }
 
-    // Token used for rewards
-    IERC20 public fizToken;
-
-    constructor(IRegistry _protocol) {
+    constructor(IRegistry _protocol, address _token) {
         availableProtocol = _protocol;
+        availableToken= _token;
     }
+
 
     // The token accepted for staking
-    mapping(address => bool) public awailableTokens;
+    address public availableToken;
 
     // struccture that stores the records of users' stakes
     mapping(uint256 => StakeInfo) public stakes;
@@ -51,7 +51,6 @@ contract NFTStaking is Ownable, ERC721Holder {
      * @param _tokenId id of hero token
      */
     function stake(
-        address tokenAddress,
         uint256 _tokenId,
         uint256 expirationTime
     ) external {
@@ -65,7 +64,7 @@ contract NFTStaking is Ownable, ERC721Holder {
 
         stakedTokens[msg.sender].push(_tokenId);
         emit Stake(msg.sender, _tokenId);
-        IERC721(tokenAddress).safeTransferFrom(
+        IERC721(availableToken).safeTransferFrom(
             msg.sender,
             address(this),
             _tokenId
@@ -76,12 +75,13 @@ contract NFTStaking is Ownable, ERC721Holder {
      * @dev withdraw the user's staked token
      * @param _tokenId id of hero token
      */
-    function unstake(address tokenAddress, uint256 _tokenId) external {
+    function unstake(uint256 _tokenId) external {
         require(
             msg.sender == stakes[_tokenId].stakerAddress,
             "Sender is not staker"
         );
         require(stakes[_tokenId].staked, "Unstaked already");
+        require(!stakes[_tokenId].inLease, "Now in lease");
         stakes[_tokenId].staked = false;
         stakes[_tokenId].stakerAddress = address(0);
 
@@ -101,7 +101,7 @@ contract NFTStaking is Ownable, ERC721Holder {
         }
 
         emit Unstake(msg.sender, _tokenId);
-        IERC721(tokenAddress).safeTransferFrom(
+        IERC721(availableToken).safeTransferFrom(
             address(this),
             msg.sender,
             _tokenId
@@ -111,10 +111,13 @@ contract NFTStaking is Ownable, ERC721Holder {
     function claim(uint256 _tokenId) external {}
 
     function leaseNFT(
-        address _nftAddress,
         uint256 _tokenID,
         uint8 _rentDuration
     ) external onlyOwner {
+        StakeInfo memory tokenInfo=stakes[_tokenID];
+        require(tokenInfo.staked ,"Staking::leaseNFT: NFT not staked");
+        require(!tokenInfo.inLease,"Staking::leaseNFT: already in leasing");
+        require(block.timestamp+_rentDuration*1 days<=tokenInfo.expirationTime,"Staking::leaseNFT: bad _rentDuration");
         IResolver.PaymentToken[]
             memory paymentTokens = new IResolver.PaymentToken[](1);
         paymentTokens[0] = IResolver.PaymentToken.DAI; // payment token DAI
@@ -124,7 +127,7 @@ contract NFTStaking is Ownable, ERC721Holder {
         NFTstandart[0] = IRegistry.NFTStandard.E721; // enum type erc721
 
         address[] memory nftAddresses = new address[](1);
-        nftAddresses[0] = _nftAddress;
+        nftAddresses[0] = availableToken;
 
         uint256[] memory tokensID = new uint256[](1);
         tokensID[0] = _tokenID;
@@ -138,7 +141,7 @@ contract NFTStaking is Ownable, ERC721Holder {
         bytes4[] memory dailyRentPrices = new bytes4[](1);
         dailyRentPrices[0] = bytes4(0x00000001); // daily rent price,
 
-        IERC721(_nftAddress).approve(address(availableProtocol), _tokenID);
+        IERC721(availableToken).approve(address(availableProtocol), _tokenID);
         availableProtocol.lend(
             NFTstandart,
             nftAddresses,

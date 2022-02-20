@@ -19,13 +19,13 @@ module.exports = async (
   console.log(await ERC721Token.balanceOf(NFTStaking.address));
 
   await ERC721Token.approve(NFTStaking.address, 1);
-  await NFTStaking.stake(ERC721Token.address, 1, 7 * 24 * 60 * 60);
+  await NFTStaking.stake( 1, 7 * 24 * 60 * 60);
 
   console.log(await ERC721Token.balanceOf(deployer.address));
   console.log(await ERC721Token.balanceOf(NFTStaking.address));
 
   await network.provider.send("evm_increaseTime", [7 * 24 * 60 * 60]);
-  await NFTStaking.unstake(ERC721Token.address, 1);
+  await NFTStaking.unstake(1);
 
   console.log(await ERC721Token.balanceOf(deployer.address));
   console.log(await ERC721Token.balanceOf(NFTStaking.address));
