@@ -2,7 +2,7 @@ const { providers } = require("ethers");
 
 module.exports = async ({
   deployments: { deploy },
-  ethers: { getNamedSigners },
+  ethers: { getContract, getNamedSigners },
 }) => {
   const { deployer } = await getNamedSigners();
 
@@ -11,6 +11,10 @@ module.exports = async ({
     args: [],
     log: true,
   });
+
+  const ERC721Token = await getContract("ERC721Token");
+
+  await ERC721Token.setBaseUri("https://drive.google.com/drive/folders/1khEGGhJ3QzvyJX5ulHmCSej0Sf-CCCMW?usp=sharing");
   // await run("userCase");
 };
 module.exports.tags = ["ERC721Token"];
