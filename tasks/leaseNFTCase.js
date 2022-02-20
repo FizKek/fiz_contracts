@@ -21,7 +21,7 @@ module.exports = async (
   await ERC721Token.approve(NFTStaking.address, 1);
   await NFTStaking.stake(1, 7 * 24 * 60 * 60);
 
-  await NFTStaking.leaseNFT(scholar.address, 1, 1);
+  await NFTStaking.leaseNFT(1, 1);
 
   await DAI.connect(scholar).faucet();
   await DAI.connect(scholar).approve(Registry.address, parseUnits("1", 14));
@@ -44,7 +44,7 @@ module.exports = async (
   // const StakeInfo = await NFTStaking.stakes(1);
   // console.log(StakeInfo);
   // console.log(await NFTStaking.getActiveScholars())
-  
+
   await NFTStaking.claimNFT(1, 1);
 
   console.log((await DAI.balanceOf(deployer.address)).toString());
@@ -52,4 +52,8 @@ module.exports = async (
   await NFTStaking.claimRewards(1, "80000000000000");
 
   console.log((await DAI.balanceOf(deployer.address)).toString());
+
+  await NFTStaking.unstake(1)
+
+  console.log("nft balance",await ERC721Token.balanceOf(deployer.address));
 };

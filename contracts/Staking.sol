@@ -28,7 +28,6 @@ contract NFTStaking is Ownable, ERC721Holder {
         uint256 harvestedYield;
         bool inLease;
         uint256 lendingID;
-        address scholarAddress;
     }
 
     constructor(
@@ -69,8 +68,6 @@ contract NFTStaking is Ownable, ERC721Holder {
         stakes[_tokenId].stakerAddress = msg.sender;
         stakes[_tokenId].expirationTime = block.timestamp + expirationTime;
 
-        stakers.push(msg.sender);
-
         stakedTokens[msg.sender].push(_tokenId);
         emit Stake(msg.sender, _tokenId);
         IERC721(availableToken).safeTransferFrom(
@@ -78,6 +75,7 @@ contract NFTStaking is Ownable, ERC721Holder {
             address(this),
             _tokenId
         );
+        stakers.push(msg.sender);
     }
 
     /**
@@ -118,7 +116,6 @@ contract NFTStaking is Ownable, ERC721Holder {
     }
 
     function leaseNFT(
-        address _scholarAddress,
         uint256 _tokenID,
         uint8 _rentDuration
     ) external onlyOwner {
@@ -167,7 +164,6 @@ contract NFTStaking is Ownable, ERC721Holder {
             dailyRentPrices,
             paymentTokens
         );
-        tokenInfo.scholarAddress = _scholarAddress;
     }
 
     function claimNFT(uint256 _tokenID, uint256 _rentingID) external {
@@ -207,6 +203,7 @@ contract NFTStaking is Ownable, ERC721Holder {
             tokenID,
             lendingID
         );
+        stakes[_tokenID].inLease=false;
     }
 
     function claimRewards(uint256 _tokenID, uint256 _amount) external {
@@ -223,28 +220,26 @@ contract NFTStaking is Ownable, ERC721Holder {
         IERC20(rewardToken).transfer(msg.sender, _amount);
     }
 
-    function getActiveScholars() external view returns (address[] memory) {
+    function getAllStakedNFT()external view returns(StakeInfo[] memory){
+        uint256 allNFTLength=getStakedNFTLength();
+        StakeInfo[] memory allNFT=new StakeInfo[](allNFTLength);
         uint256 counter;
-        for (uint256 i; i < stakers.length; i++) {
-            uint256[] memory id = stakedTokens[stakers[i]];
-            for (uint256 j; j < id.length; i++) {
-                if (stakes[j].scholarAddress != address(0)) {
-                    counter++;
-                }
+        for (uint256 i=0;i<stakers.length;i++){
+            uint256[] memory stakerNFT=stakedTokens[stakers[i]];
+            for (uint256 j=0;j<stakerNFT.length;i++){
+                allNFT[counter]=stakes[stakerNFT[j]];
+                counter++;
             }
         }
-        address[] memory activeScholars = new address[](counter);
-        counter = 0;
-
-        for (uint256 i; i < stakers.length; i++) {
-            uint256[] memory id = stakedTokens[stakers[i]];
-            for (uint256 j; j < id.length; i++) {
-                if (stakes[j].scholarAddress != address(0)) {
-                    activeScholars[counter];
-                    counter++;
-                }
-            }
-        }
-        return activeScholars;
+        return allNFT;
     }
+
+    function getStakedNFTLength()public view returns(uint256){
+        uint256 length;
+        for (uint256 i=0;i<stakers.length;i++){
+            length+=stakedTokens[stakers[i]].length;
+        }
+        return length;
+    }
+
 }
