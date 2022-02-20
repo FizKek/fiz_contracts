@@ -27,13 +27,14 @@ contract NFTStaking is Ownable, ERC721Holder {
         // The amount of yield user already harvested
         uint256 harvestedYield;
         bool inLease;
+        uint256 lendingID;
+        address scholarAddress;
     }
 
     constructor(IRegistry _protocol, address _token) {
         availableProtocol = _protocol;
-        availableToken= _token;
+        availableToken = _token;
     }
-
 
     // The token accepted for staking
     address public availableToken;
@@ -43,6 +44,8 @@ contract NFTStaking is Ownable, ERC721Holder {
     // struccture that stores the records of users' staked tokens
     mapping(address => uint256[]) public stakedTokens;
 
+    address[] public stakers;
+
     event Stake(address indexed user, uint256 indexed tokenId);
     event Unstake(address indexed user, uint256 indexed tokenId);
 
@@ -50,10 +53,7 @@ contract NFTStaking is Ownable, ERC721Holder {
      * @dev submit the stake
      * @param _tokenId id of hero token
      */
-    function stake(
-        uint256 _tokenId,
-        uint256 expirationTime
-    ) external {
+    function stake(uint256 _tokenId, uint256 expirationTime) external {
         require(
             expirationTime >= 1 weeks,
             "expirationTime must be more then 1 week"
@@ -61,6 +61,8 @@ contract NFTStaking is Ownable, ERC721Holder {
         stakes[_tokenId].staked = true;
         stakes[_tokenId].stakerAddress = msg.sender;
         stakes[_tokenId].expirationTime = block.timestamp + expirationTime;
+
+        stakers.push(msg.sender);
 
         stakedTokens[msg.sender].push(_tokenId);
         emit Stake(msg.sender, _tokenId);
@@ -111,13 +113,21 @@ contract NFTStaking is Ownable, ERC721Holder {
     function claim(uint256 _tokenId) external {}
 
     function leaseNFT(
+        address _scholarAddress,
         uint256 _tokenID,
         uint8 _rentDuration
     ) external onlyOwner {
-        StakeInfo memory tokenInfo=stakes[_tokenID];
-        require(tokenInfo.staked ,"Staking::leaseNFT: NFT not staked");
-        require(!tokenInfo.inLease,"Staking::leaseNFT: already in leasing");
-        require(block.timestamp+_rentDuration*1 days<=tokenInfo.expirationTime,"Staking::leaseNFT: bad _rentDuration");
+        StakeInfo memory tokenInfo = stakes[_tokenID];
+        require(tokenInfo.staked, "Staking::leaseNFT: NFT not staked");
+        require(
+            tokenInfo.lendingID == 0,
+            "Staking::leaseNFT: already in leasing"
+        );
+        require(
+            block.timestamp + _rentDuration * 1 days <=
+                tokenInfo.expirationTime,
+            "Staking::leaseNFT: bad _rentDuration"
+        );
         IResolver.PaymentToken[]
             memory paymentTokens = new IResolver.PaymentToken[](1);
         paymentTokens[0] = IResolver.PaymentToken.DAI; // payment token DAI
@@ -133,7 +143,7 @@ contract NFTStaking is Ownable, ERC721Holder {
         tokensID[0] = _tokenID;
 
         uint256[] memory lendAmounts = new uint256[](1);
-        lendAmounts[0] = 10000; // lendamount,
+        lendAmounts[0] = 1; // lendamount,
 
         uint8[] memory rentDurations = new uint8[](1);
         rentDurations[0] = _rentDuration; // rent duration uint8,
@@ -151,5 +161,36 @@ contract NFTStaking is Ownable, ERC721Holder {
             dailyRentPrices,
             paymentTokens
         );
+        tokenInfo.lendingID = availableProtocol.lendingID();
+        tokenInfo.scholarAddress = _scholarAddress;
+    }
+
+    function getActiveScholars(address _scholar)
+        external
+        view
+        returns (address[] memory)
+    {
+        uint256 counter;
+        for (uint256 i; i < stakers.length; i++) {
+            uint256[] memory id = stakedTokens[stakers[i]];
+            for (uint256 j; j < id.length; i++) {
+                if (stakes[j].scholarAddress == _scholar) {
+                    counter++;
+                }
+            }
+        }
+        address[] memory activeScholars = new address[](counter);
+        counter = 0;
+
+        for (uint256 i; i < stakers.length; i++) {
+            uint256[] memory id = stakedTokens[stakers[i]];
+            for (uint256 j; j < id.length; i++) {
+                if (stakes[j].scholarAddress == _scholar) {
+                    activeScholars[counter];
+                    counter++;
+                }
+            }
+        }
+        return activeScholars;
     }
 }

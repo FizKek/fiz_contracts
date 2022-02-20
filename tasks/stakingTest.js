@@ -19,7 +19,7 @@ module.exports = async (
   console.log(await ERC721Token.balanceOf(NFTStaking.address));
 
   await ERC721Token.approve(NFTStaking.address, 1);
-  await NFTStaking.stake( 1, 7 * 24 * 60 * 60);
+  await NFTStaking.stake(1, 7 * 24 * 60 * 60);
 
   console.log(await ERC721Token.balanceOf(deployer.address));
   console.log(await ERC721Token.balanceOf(NFTStaking.address));

@@ -11,7 +11,7 @@ module.exports = async ({
     args: [],
     log: true,
   });
-  // await run("userCase")
+  // await run("userCase");
 };
 module.exports.tags = ["ERC721Token"];
 module.exports.dependencies = ["Registry", "DAI"];

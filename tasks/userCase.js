@@ -16,8 +16,6 @@ module.exports = async (
   const ERC721Token = await getContract("ERC721Token");
   const Registry = await getContract("Registry");
 
-  await Resolver.setPaymentToken(1, DAI.address);
-
   await ERC721Token.faucet();
   // console.log(await ERC721Token.balanceOf(deployer.address));
   // console.log(await ERC721Token.tokenByIndex(0));
@@ -57,7 +55,6 @@ module.exports = async (
   //     [1],// lendingId
   //     [1],// rentDuration uint8
   //     )
-
 
   await network.provider.send("evm_increaseTime", [2 * 24 * 60 * 60]);
 

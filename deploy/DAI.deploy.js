@@ -4,11 +4,15 @@ module.exports = async ({
 }) => {
   const { deployer } = await getNamedAccounts();
 
-  await deploy("DAI", {
+  const DAI=await deploy("DAI", {
     from: deployer,
     args: [],
     log: true,
   });
+
+  const Resolver = await getContract("Resolver");
+
+  await Resolver.setPaymentToken(1, DAI.address);
 };
 module.exports.tags = ["DAI"];
 module.exports.dependencies = ["Resolver"];
